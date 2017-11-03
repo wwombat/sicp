@@ -38,10 +38,6 @@ Yoko Ono's Grapefruit <link>.
 The ability to APPLY mathematical discoveries to one's work is an option
 available to everyone, no genius required!!
 
-For some people, getting help from someone who already gets it is all they need!
-But, for others, "help" can have the opposite effect: doing Math with someone
-who is significantly 'math-IQ-smarter' than you can be bruising to the soul!
-
 The key is to persevere in the face of not-getting it!
 
     1) Know stuff
@@ -53,7 +49,7 @@ The goal is to learn general categories of math things!
 When one listens to music, one builds up a library of sounds and styles: and
 almost like magic, you subconsciously begin to get ~feelings~ about these
 styles. When you hear a piece of music, you get a feeling about what type of
-music it is- what "rules" of sound were invoked to creat it. Just like how you
+music it is- what "rules" of sound were invoked to create it. Just like how you
 can learn to recognize genres of music (something can *feel* hip-hop, or
 country, or rock, or baroque, etc. etc.), you can learn to *feel*
 different categories of Mathematical things! MATH being a fundamental reflection
