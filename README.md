@@ -52,10 +52,10 @@ Feel like you aren't alone:
 
 
 
-
+----------------------------
 
 <a name="fn1"></a> 
-1. These numbers are currently bogus.
+<sub>1) These numbers are currently bogus.</sub>
 
 <a name="fn2"></a> 
-2. Plus shipping and handling.
+<sub>2) Plus shipping and handling.</sub>
