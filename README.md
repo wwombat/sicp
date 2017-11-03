@@ -26,8 +26,6 @@ Where to get SICP:
 * [Or use the online edition](https://mitpress.mit.edu/sicp/full-text/book/book.html)
 * [Or read it old school :)](https://www.amazon.com/Structure-Interpretation-Computer-Programs-Engineering/dp/0262510871)
   * I purchased my copy from used book store on Amazon in exchange for a measly **singular cent!**[<sup>2</sup>](#fn2). 
-    I was naturally supremely pleased with myself, up until the point I realized that I had essentially paid them to ship me trash...
-    at which point I became absolutely ecstatic!
 
 How to work on SICP:
 * [Repl it in emacs!](http://www.nongnu.org/geiser/)
@@ -58,4 +56,4 @@ Feel like you aren't alone:
 <sub>1) These numbers are currently bogus.</sub>
 
 <a name="fn2"></a> 
-<sub>2) Plus shipping and handling.</sub>
+<sub>2) Plus shipping and handling. I was naturally supremely pleased with myself, up until the point I realized that I had essentially paid them to ship me trash... at which point I became absolutely ecstatic!</sub>
