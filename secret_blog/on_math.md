@@ -54,13 +54,13 @@ When one listens to music, one builds up a library of sounds and styles: and
 almost like magic, you subconsciously begin to get ~feelings~ about these
 styles. When you hear a piece of music, you get a feeling about what type of
 music it is- what "rules" of sound were invoked to creat it. Just like how you
-can learn to recognize genres of music (something can ~feel~ hip-hop, or
-~country~, or ~rock~, or ~baroque~, etc. etc.), you can learn to ~feel~
+can learn to recognize genres of music (something can *feel* hip-hop, or
+country, or rock, or baroque, etc. etc.), you can learn to *feel*
 different categories of Mathematical things! MATH being a fundamental reflection
 of reality notwithstanding, recognizing when you can use Mathematical results
 isn't any different from recognizing anything else!
 
-The eventual goal is "this feels _____-y" - -this- ~feels~ like -that-!
+The eventual goal is "this feels _____-y" - -this- *feels* like -that-!
 
 So, are you ready? Are you DETERMINED? :3
 Then let's get to it!!!
