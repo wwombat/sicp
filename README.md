@@ -7,10 +7,10 @@ to reach 100% SICP completion.
 
 It contains solutions (often with explanations!) of all
 of the exercises in the latest edition of sicp, as well
-as various helper scripts, my reflections and a variety
-of illustrations
+as various helper scripts, my reflections, and a variety
+of illustrations.
 
-## Progress:
+## Progress [<sup>caveat</sup>](#caveat)
 
 ```
 Chapter 1 [===============] 100%
@@ -19,5 +19,27 @@ Chapter 3 [=              ]   8%
 Chapter 4 [===            ]  20%
 ```
 
-(These numbers are bogus, but perhaps I will
- rig up a better way to account for progress!)
+## Resources
+
+Where to get SICP:
+* [Read it in emacs!](https://github.com/webframp/sicp-info)
+* [Or use the online edition](https://mitpress.mit.edu/sicp/full-text/book/book.html)
+* [Or read it old school :)](https://www.amazon.com/Structure-Interpretation-Computer-Programs-Engineering/dp/0262510871)
+  * I got my copy off a used book store on Amazon for an amazing 1 cent!
+    (plus shipping and handling). I was supremely pleased with myself until I
+    realized that I had essentially paid them to ship me trash, at which point
+    I became ecstatic. :)
+
+How to work on SICP:
+* [Repl it in emacs!](http://www.nongnu.org/geiser/)
+* [Work in your browser!](https://repl.it/languages/scheme)
+
+Feel like you aren't alone:
+* [The esteemed Bill the Lizard](http://www.billthelizard.com/2009/10/sicp-challenge.html)
+* [The haikus of Kobayashi Issa](http://haikuguy.com/issa/)
+* [The artwork of Dana Schutz](http://www.petzel.com/artists/dana-schutz)
+* [Prints by Hasui Kawase](http://www.roningallery.com/artists/hasui-kawase)
+
+<a name="caveat"/>
+Caveat: These numbers are currently bogus- :) But perhaps someday I will
+rig up a better way to account for progress! Perhaps...
