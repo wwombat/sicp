@@ -10,7 +10,7 @@ of the exercises in the latest edition of sicp, as well
 as various helper scripts, my reflections, and a variety
 of illustrations.
 
-## Progress [<sup>caveat</sup>](#caveat)
+## Progress [<sup>1</sup>](#fn1)
 
 ```
 Chapter 1 [===============] 100%
@@ -25,10 +25,9 @@ Where to get SICP:
 * [Read it in emacs!](https://github.com/webframp/sicp-info)
 * [Or use the online edition](https://mitpress.mit.edu/sicp/full-text/book/book.html)
 * [Or read it old school :)](https://www.amazon.com/Structure-Interpretation-Computer-Programs-Engineering/dp/0262510871)
-  * I got my copy off a used book store on Amazon for an amazing 1 cent!
-    (plus shipping and handling). I was supremely pleased with myself until I
-    realized that I had essentially paid them to ship me trash, at which point
-    I became ecstatic. :)
+  * I purchased my copy from used book store on Amazon in exchange for a measly **singular cent!**[<sup>2</sup>](#fn2). 
+    I was naturally supremely pleased with myself, up until the point I realized that I had essentially paid them to ship me trash...
+    at which point I became absolutely ecstatic!
 
 How to work on SICP:
 * [Repl it in emacs!](http://www.nongnu.org/geiser/)
@@ -40,6 +39,23 @@ Feel like you aren't alone:
 * [The artwork of Dana Schutz](http://www.petzel.com/artists/dana-schutz)
 * [Prints by Hasui Kawase](http://www.roningallery.com/artists/hasui-kawase)
 
-<a name="caveat"/>
-Caveat: These numbers are currently bogus- :) But perhaps someday I will
-rig up a better way to account for progress! Perhaps...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="fn1"></a> 
+1. These numbers are currently bogus.
+
+<a name="fn2"></a> 
+2. Plus shipping and handling.
