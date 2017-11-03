@@ -25,7 +25,7 @@ Where to get SICP:
 * [Read it in emacs!](https://github.com/webframp/sicp-info)
 * [Or use the online edition](https://mitpress.mit.edu/sicp/full-text/book/book.html)
 * [Or read it old school :)](https://www.amazon.com/Structure-Interpretation-Computer-Programs-Engineering/dp/0262510871)
-  * I purchased my copy from used book store on Amazon in exchange for a measly **singular cent!**[<sup>2</sup>](#fn2). 
+  * I purchased my copy from a used book store on Amazon in exchange for a measly **singular cent!**[<sup>2</sup>](#fn2). 
 
 How to work on SICP:
 * [Repl it in emacs!](http://www.nongnu.org/geiser/)
