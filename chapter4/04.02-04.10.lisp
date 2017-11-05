@@ -144,29 +144,183 @@
         (else
          (error "Unknown expression type -- EVAL" exp))))
 
+;; While what they are looking for is something along the lines of
+;; the following: 
+
+    (put ('lambda (lambda (exp env) (make-procedure (lambda-parameters exp)
+                                                    (lambda-body exp)
+                                                    env))))
+
+    ;; etc...
+
+    (define (dd-eval exp env)
+    (let ((action (get (car exp))))
+        (cond ((not (null? action)) (action exp env))
+            (else (error "Unknown expression type -- EVAL" exp)))))
+
+;; It is worth nothing that this implementation requires, as the authors
+;; point out above, a grammar where every different kind of expression is
+;; preceeded by a lable indicating which type of expression it is!
+;; While this makes our dispatch quick - an amortized constant time, in-
+;; dependant of the number of expression types, if we're using a hash
+;; table!! - it is hardly the most ergonomic choice!
+;;
+;; We could compensate for this by splitting up the expression type
+;; identification step and the evaluation step, transforming our initial
+;; expressions into a tagged form as a first step of interpretation-
+;; but then we are encountered with the same problem again, of how to
+;; dispatch on expression type in an efficient way!
+
+;; The book's implementation (a long cond clause) has a number of checks
+;; proportional to the number of expression types- and it is easy to
+;; imagine arranging those checks in such a way that additional expres-
+;; sion types could be added without editing the evaluate method!
+
+;; Instead, we could create a list of operations and iterate through them!
+;; The definition of eval, along with the addition of expression types,
+;; would then look something like this:
+
+;; Define a pair object that contains a 
+
+(define (make-expr-type predicate evaluator)
+  (cons predicate evaluator))
+
+(define (expr-pred exp-type)
+  (car exp-type))
+
+(define (expr-eval exp-type)
+  (cdr exp-type))
+
+(define expressions '())
+
+(define (add-expression expression)
+  (set! expressions (append expressions (list expression))))
+
+(define (list-eval exp env)
+  (define (list-eval-iter exp env expressions)
+    (cond ((null? expressions) (error "Unknown expression type -- EVAL" exp))
+          (((expr-pred (car expressions)) exp) ((expr-eval (car expressions)) exp env))
+          (else (list-eval-iter exp env (cdr expressions)))))
+  (list-eval-iter exp env expressions)) 
+
+;; Example
+
+;; recalling tagged-list? ...
+
+      (define (tagged-list? exp tag)
+        (if (pair? exp)
+            (eq? (car exp) tag)
+            false))
+
+(define (is-potato? expr) (tagged-list? expr 'potato)) 
+(define (eval-potato expr env) 42)
+
+(define (is-parsnip? expr) (tagged-list? expr 'parsnip)) 
+(define (eval-parsnip expr env) 1)
+
+(add-expression (make-expr-type is-potato? eval-potato)) 
+(add-expression (make-expr-type is-parsnip? eval-parsnip)) 
+
+(list-eval '(potato + 5) '()) 
+(list-eval '(parsnip + 5) '()) 
+(list-eval '(3 + 5) '()) 
+
+;; A more sophisticated strategy, perhaps, could search this list of
+;; predicate in a more efficient way- through a tree structure, perhaps...
+;; But figuring out how to generically construct a thing is surely beyond
+;; the scope of this assignment!
 
 
 ;;   *Exercise 4.4:* Recall the definitions of the special forms `and'
 ;;   and `or' from *Note Chapter 1:::
-
+;;
 ;;      * `and': The expressions are evaluated from left to right.  If
 ;;        any expression evaluates to false, false is returned; any
 ;;        remaining expressions are not evaluated.  If all the
 ;;        expressions evaluate to true values, the value of the last
 ;;        expression is returned.  If there are no expressions then
 ;;        true is returned.
-
+;;
 ;;      * `or': The expressions are evaluated from left to right.  If
 ;;        any expression evaluates to a true value, that value is
 ;;        returned; any remaining expressions are not evaluated.  If
 ;;        all expressions evaluate to false, or if there are no
 ;;        expressions, then false is returned.
-
-
+;;
 ;;   Install `and' and `or' as new special forms for the evaluator by
 ;;   defining appropriate syntax procedures and evaluation procedures
 ;;   `eval-and' and `eval-or'.  Alternatively, show how to implement
 ;;   `and' and `or' as derived expressions.
+
+;; Approach 1: special procedures
+(define (default? exp) #t)
+(define (eval-default exp env) exp)
+
+(define (is-and? exp) (tagged-list? exp 'and)) 
+(define (and-args exp) (cdr exp)) 
+(define (eval-and exp env)
+  (define (eval-and-rec exps env)
+    (if (null? exps) #t
+      (and (list-eval (car exps) env) (eval-and-rec (cdr exps) env))))
+  (eval-and-rec (and-args exp) env)) 
+
+(define (is-or? exp) (tagged-list? exp 'or)) 
+(define (or-args exp) (cdr exp)) 
+(define (eval-or exp env)
+  (define (eval-or-rec exps env)
+    (if (null? exps) #f
+      (or (list-eval (car exps) env) (eval-or-rec (cdr exps) env))))
+  (eval-or-rec (and-args exp) env)) 
+
+(define expressions '())
+
+(add-expression (make-expr-type is-and? eval-and)) 
+(add-expression (make-expr-type is-or? eval-or)) 
+(add-expression (make-expr-type default? eval-default)) 
+
+(list-eval '(and #t #t #f) '()) 
+(list-eval '(and #t #t #t) '()) 
+(list-eval '(or #f #t #f) '()) 
+(list-eval '(or (and #f #f) (and #t #f)) '()) 
+
+;;;;; not in a dumb way
+
+;; meh! the dumb way is fine 'w'
+
+;;;;; as derived expressions
+
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequent alternative))
+
+
+(define (is-and? exp) (tagged-list? exp 'and)) 
+(define (and-args exp) (cdr exp)) 
+(define (eval-and exp env)
+  (eval (and->if exp) env)) 
+(define (and->if exp)
+  (expand-and (and-args exp)))
+(define (expand-and args)
+  (if (null? args)
+      'true
+    (let ((first (car args))
+          (rest (cdr args)))
+      (make-if (list 'not first) 'false (expand-and rest))))) 
+
+(expand-and '((= 1 2) #t (not #f)))
+
+(define (is-or? exp) (tagged-list? exp 'or)) 
+(define (or-args exp) (cdr exp)) 
+(define (eval-or exp env)
+  (eval (or->if exp) env)) 
+(define (or->if exp)
+  (expand-or (or-args exp))) 
+(define (expand-or args)
+  (if (null? args)
+      'false
+    (let ((first (car args))
+          (rest (cdr args)))
+      (make-if first 'true (expand-or rest))))) 
+
 
 ;;   *Exercise 4.5:* Scheme allows an additional syntax for `cond'
 ;;   clauses, `(<TEST> => <RECIPIENT>)'.  If <TEST> evaluates to a true

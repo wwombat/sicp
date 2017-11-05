@@ -16,6 +16,8 @@
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
+        ((and? exp) (eval-and exp env))
+        ((or? exp) (eval-or exp env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -253,3 +255,35 @@
                  (make-if (cond-predicate first)
                           (sequence->exp (cond-actions first))
                           (expand-clauses rest))))))
+
+;;==========================
+
+;;   *Exercise 4.4:* 
+
+(define (and? exp) (tagged-list? exp 'and)) 
+(define (and-args exp) (cdr exp)) 
+(define (eval-and exp env)
+  (eval (and->if exp) env)) 
+(define (and->if exp)
+  (expand-and (and-args exp)))
+(define (expand-and args)
+  (if (null? args)
+      'true
+    (let ((first (car args))
+          (rest (cdr args)))
+      (make-if (list 'not first) 'false (expand-and rest))))) 
+
+(expand-and '((= 1 2) #t (not #f)))
+
+(define (or? exp) (tagged-list? exp 'or)) 
+(define (or-args exp) (cdr exp)) 
+(define (eval-or exp env)
+  (eval (or->if exp) env)) 
+(define (or->if exp)
+  (expand-or (or-args exp))) 
+(define (expand-or args)
+  (if (null? args)
+      'false
+    (let ((first (car args))
+          (rest (cdr args)))
+      (make-if first 'true (expand-or rest))))) 
