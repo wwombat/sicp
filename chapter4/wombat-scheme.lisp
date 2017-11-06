@@ -237,10 +237,19 @@
 
      (define (cond-predicate clause) (car clause))
 
-     (define (cond-actions clause) (cdr clause))
+;;     (define (cond-actions clause) (cdr clause))
+
+;; *Exercise 4.5:*
+
+(define (cond-actions clause)
+  (if (eq? (cadr clause) '=>)
+      (list (caddr clause) (cond-predicate clause))
+    (cdr clause)))
 
      (define (cond->if exp)
        (expand-clauses (cond-clauses exp)))
+
+;;;;;;;;;;;;;;;;;;
 
      (define (expand-clauses clauses)
        (if (null? clauses)

@@ -115,3 +115,7 @@ venv.bak/
 *.out
 *.app
 *.tsk
+
+# Emacs
+\#*
+\.#*

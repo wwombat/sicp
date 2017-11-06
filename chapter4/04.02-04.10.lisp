@@ -180,8 +180,6 @@
 ;; The definition of eval, along with the addition of expression types,
 ;; would then look something like this:
 
-;; Define a pair object that contains a 
-
 (define (make-expr-type predicate evaluator)
   (cons predicate evaluator))
 
