@@ -333,6 +333,44 @@
 ;;   returns 2.  Modify the handling of `cond' so that it supports this
 ;;   extended syntax.
 
+;; Recall...
+
+     (define (cond? exp) (tagged-list? exp 'cond))
+
+     (define (cond-clauses exp) (cdr exp))
+
+     (define (cond-else-clause? clause)
+       (eq? (cond-predicate clause) 'else))
+
+     (define (cond-predicate clause) (car clause))
+
+     (define (cond-actions clause) (cdr clause))
+
+     (define (cond->if exp)
+       (expand-clauses (cond-clauses exp)))
+
+     (define (expand-clauses clauses)
+       (if (null? clauses)
+           'false                          ; no `else' clause
+           (let ((first (car clauses))
+                 (rest (cdr clauses)))
+             (if (cond-else-clause? first)
+                 (if (null? rest)
+                     (sequence->exp (cond-actions first))
+                     (error "ELSE clause isn't last -- COND->IF"
+                            clauses))
+                 (make-if (cond-predicate first)
+                          (sequence->exp (cond-actions first))
+                          (expand-clauses rest))))))
+
+;; Thanks to the way the code is structured, our changes are pretty
+;; contained - we only have to touch the cond-actions procedure!
+
+(define (cond-actions clause)
+  (if (eq? (cadr clause) '=>)
+      (list (caddr clause) (cond-predicate clause))
+    (cdr clause)))
+
 ;;   *Exercise 4.6:* `Let' expressions are derived expressions, because
 
 ;;        (let ((<VAR_1> <EXP_1>) ... (<VAR_N> <EXP_N>))
@@ -350,6 +388,46 @@
 ;;   reduces evaluating `let' expressions to evaluating combinations of
 ;;   the type shown above, and add the appropriate clause to `eval' to
 ;;   handle `let' expressions.
+
+
+;; ==========
+
+;; Here we're tossed a soft-ball - out goal here is to simply be a human
+;; compiler for the high level code they've provided us, and to do so
+;; with grace and aplomb! So, without further ado, here we go:
+
+;; First let's create a test cases mirroring the example:
+(define test-let '(let ((V1 EXP1) (V2 EXP2) (V3 EXP3) (VN EXPN)) (BODY OF THE EXPR)))
+
+;; Then, recalling the make-lambda procedure defined in the book:
+(define (make-lambda parameters body)
+  (cons 'lambda (cons parameters body)))
+
+;; We create functions to retrieve the various parts of a let expression -
+(define (let-clauses expr) (cadr expr))
+(define (let-vars clauses)
+  (fold-right cons '() (map let-clause-var clauses))) 
+(define (let-exprs clauses)
+  (fold-right cons '() (map let-clause-exp clauses))) 
+
+(define (let-clause-var clause) (car clause))
+(define (let-clause-exp clause) (cadr clause))
+
+(define (let-body expr) (cddr expr))
+
+;; And then combine them in accordance with the organization
+;; of the transformed expression above:
+
+(define (let->combination expr)
+  (let ((clauses (let-clauses expr)))
+    (cons (make-lambda (let-vars clauses) (let-body expr))
+          (let-exprs clauses)))) 
+
+;; Evaluating our test case, we get...
+(let->combination test-let) 
+;; ((lambda (v1 v2 v3 vn) (body of the expression)) exp1 exp2 exp3 expn) 
+
+;; Bingo!
 
 ;;   *Exercise 4.7:* `Let*' is similar to `let', except that the
 ;;   bindings of the `let' variables are performed sequentially from

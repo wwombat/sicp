@@ -296,3 +296,36 @@
     (let ((first (car args))
           (rest (cdr args)))
       (make-if first 'true (expand-or rest))))) 
+
+;;   *Exercise 4.6:* `Let' expressions are derived expressions, because
+
+;;        (let ((<VAR_1> <EXP_1>) ... (<VAR_N> <EXP_N>))
+;;          <BODY>)
+
+;;   is equivalent to
+
+;;        ((lambda (<VAR_1> ... <VAR_N>)
+;;           <BODY>)
+;;         <EXP_1>
+;;         ...
+;;         <EXP_N>)
+
+(define (let-clauses expr) (cadr expr))
+(define (let-body expr) (cddr expr))
+
+(define (let-vars clauses)
+  (fold-right cons '() (map let-clause-var clauses))) 
+
+(define (let-exprs clauses)
+  (fold-right cons '() (map let-clause-exp clauses))) 
+
+(define (let-clause-var clause) (car clause))
+(define (let-clause-exp clause) (cadr clause))
+
+(let-vars (let-clauses test-let)) 
+(let-exprs (let-clauses test-let)) 
+
+(define (let->combination expr)
+  (let ((clauses (let-clauses expr)))
+    (cons (make-lambda (let-vars clauses) (let-body expr))
+          (let-exprs clauses)))) 
