@@ -1,3 +1,6 @@
+;; Let's save the original wombat-apply, real quick!!!
+(define wombat-apply-in-underlying-scheme apply)
+
 ;;==============
 ;; EVALUATION
 ;;==============
@@ -16,15 +19,18 @@
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
+        ((let? exp) (eval (let->lambda exp) env))
+        ((and? exp) (eval-and exp env))
+        ((or? exp) (eval-or exp env))
         ((application? exp)
-         (apply (eval (operator exp) env)
+         (wombat-apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
         (else
          (error "Unknown expression type -- EVAL" exp))))
 
-(define (apply procedure arguments)
+(define (wombat-apply procedure arguments)
   (cond ((primitive-procedure? procedure)
-         (apply-primitive-procedure procedure arguments))
+         (wombat-apply-primitive-procedure procedure arguments))
         ((compound-procedure? procedure)
          (eval-sequence
           (procedure-body procedure)
@@ -34,7 +40,7 @@
            (procedure-environment procedure))))
         (else
          (error
-          "Unknown procedure type -- APPLY" procedure))))
+          "Unknown procedure type -- WOMBAT-APPLY" procedure))))
 
 (define (list-of-values exps env)
   (if (no-operands? exps)
@@ -82,13 +88,6 @@
 
           (define (variable? exp) (symbol? exp))
 
-;; * Quotations have the form `(quote <TEXT-OF-QUOTATION>)':(1)
-
-          (define (quoted? exp)
-            (tagged-list? exp 'quote))
-
-          (define (text-of-quotation exp) (cadr exp))
-
 ;;   `Quoted?' is defined in terms of the procedure `tagged-list?',
 ;;   which identifies lists beginning with a designated symbol:
 
@@ -96,6 +95,13 @@
             (if (pair? exp)
                 (eq? (car exp) tag)
                 false))
+
+;; * Quotations have the form `(quote <TEXT-OF-QUOTATION>)':(1)
+
+          (define (quoted? exp)
+            (tagged-list? exp 'quote))
+
+          (define (text-of-quotation exp) (cadr exp))
 
 ;; * Assignments have the form `(set! <VAR> <VALUE>)':
 
@@ -235,10 +241,19 @@
 
      (define (cond-predicate clause) (car clause))
 
-     (define (cond-actions clause) (cdr clause))
+;;     (define (cond-actions clause) (cdr clause))
+
+;; *Exercise 4.5:*
+
+(define (cond-actions clause)
+  (if (eq? (cadr clause) '=>)
+      (list (caddr clause) (cond-predicate clause))
+    (cdr clause)))
 
      (define (cond->if exp)
        (expand-clauses (cond-clauses exp)))
+
+;;;;;;;;;;;;;;;;;;
 
      (define (expand-clauses clauses)
        (if (null? clauses)
@@ -253,3 +268,312 @@
                  (make-if (cond-predicate first)
                           (sequence->exp (cond-actions first))
                           (expand-clauses rest))))))
+
+;;==========================
+
+;;   *Exercise 4.4:* 
+
+(define (and? exp) (tagged-list? exp 'and)) 
+(define (and-args exp) (cdr exp)) 
+(define (eval-and exp env)
+  (eval (and->if exp) env)) 
+(define (and->if exp)
+  (expand-and (and-args exp)))
+(define (expand-and args)
+  (if (null? args)
+      'true
+    (let ((first (car args))
+          (rest (cdr args)))
+      (make-if (list 'not first) 'false (expand-and rest))))) 
+
+(expand-and '((= 1 2) #t (not #f)))
+
+(define (or? exp) (tagged-list? exp 'or)) 
+(define (or-args exp) (cdr exp)) 
+(define (eval-or exp env)
+  (eval (or->if exp) env)) 
+(define (or->if exp)
+  (expand-or (or-args exp))) 
+(define (expand-or args)
+  (if (null? args)
+      'false
+    (let ((first (car args))
+          (rest (cdr args)))
+      (make-if first 'true (expand-or rest))))) 
+
+
+;;   *Exercise 4.6:* `Let' expressions are derived expressions, because
+
+;;        (let ((<VAR_1> <EXP_1>) ... (<VAR_N> <EXP_N>))
+;;          <BODY>)
+
+;;   is equivalent to
+
+;;        ((lambda (<VAR_1> ... <VAR_N>)
+;;           <BODY>)
+;;         <EXP_1>
+;;         ...
+;;         <EXP_N>)
+
+(define (let? p) (tagged-list? p 'let))
+
+(define (let-clauses expr) (cadr expr))
+(define (let-body expr) (cddr expr))
+
+(define (let-vars clauses)
+  (fold-right cons '() (map let-clause-var clauses))) 
+
+(define (let-exprs clauses)
+  (fold-right cons '() (map let-clause-exp clauses))) 
+
+(define (let-clause-var clause) (car clause))
+(define (let-clause-exp clause) (cadr clause))
+
+(define (let->lambda expr)
+  (let ((clauses (let-clauses expr)))
+    (cons (make-lambda (let-vars clauses) (let-body expr))
+          (let-exprs clauses)))) 
+
+;; TO DO:
+
+;;   *Exercise 4.8:* `Let*'
+;;   *Exercise 4.8:* "Named `let'"
+;;   *Exercise 4.9:* Many languages support a variety of iteration
+;;   constructs, such as `do', `for', `while', and `until'. 
+;;   *Exercise 4.10:* By using data abstraction, we were able to write
+;;   an `eval' procedure that is independent of the particular syntax
+;;   of the language to be evaluated.  To illustrate this, design and
+;;   implement a new syntax for Scheme by modifying the procedures in
+;;   this section, without changing `eval' or `wombat-apply'.
+
+
+;;===============================================
+;; EVALUATOR DATA STRUCTURES
+;;===============================================
+
+;;  For conditionals, we accept anything to be true that is not the explicit
+;;  `false' object.
+
+     (define (true? x)
+       (not (eq? x false)))
+
+     (define (false? x)
+       (eq? x false))
+
+(define (wombat-not x)
+  (if (true? x) false true))
+
+;;  Compound procedures are constructed from parameters, procedure
+;;  bodies, and environments using the constructor `make-procedure':
+
+     (define (make-procedure parameters body env)
+       (list 'procedure parameters body env))
+
+     (define (compound-procedure? p)
+       (tagged-list? p 'procedure))
+
+     (define (procedure-parameters p) (cadr p))
+
+     (define (procedure-body p) (caddr p))
+
+     (define (procedure-environment p) (cadddr p))
+
+
+;;  To implement these operations we represent an environment as a list
+;;  of frames.  The enclosing environment of an environment is the `cdr' of
+;;  the list.  The empty environment is simply the empty list.
+
+     (define (enclosing-environment env) (cdr env))
+
+     (define (first-frame env) (car env))
+
+     (define the-empty-environment '())
+
+;;  Each frame of an environment is represented as a pair of lists: a
+;;  list of the variables bound in that frame and a list of the associated
+;;  values.(1)
+
+     (define (make-frame variables values)
+       (cons variables values))
+
+     (define (frame-variables frame) (car frame))
+
+     (define (frame-values frame) (cdr frame))
+
+     (define (add-binding-to-frame! var val frame)
+       (set-car! frame (cons var (car frame)))
+       (set-cdr! frame (cons val (cdr frame))))
+
+;;  To extend an environment by a new frame that associates variables
+;;  with values, we make a frame consisting of the list of variables and
+;;  the list of values, and we adjoin this to the environment.  We signal
+;;  an error if the number of variables does not match the number of values.
+
+     (define (extend-environment vars vals base-env)
+       (if (= (length vars) (length vals))
+           (cons (make-frame vars vals) base-env)
+           (if (< (length vars) (length vals))
+               (error "Too many arguments supplied" vars vals)
+               (error "Too few arguments supplied" vars vals))))
+
+;;  To look up a variable in an environment, we scan the list of
+;;  variables in the first frame.  If we find the desired variable, we
+;;  return the corresponding element in the list of values.  If we do not
+;;  find the variable in the current frame, we search the enclosing
+;;  environment, and so on.  If we reach the empty environment, we signal
+;;  an "unbound variable" error.
+
+     (define (lookup-variable-value var env)
+       (define (env-loop env)
+         (define (scan vars vals)
+           (cond ((null? vars)
+                  (env-loop (enclosing-environment env)))
+                 ((eq? var (car vars))
+                  (car vals))
+                 (else (scan (cdr vars) (cdr vals)))))
+         (if (eq? env the-empty-environment)
+             (error "Unbound variable" var)
+             (let ((frame (first-frame env)))
+               (scan (frame-variables frame)
+                     (frame-values frame)))))
+       (env-loop env))
+
+;;  To set a variable to a new value in a specified environment, we scan
+;;  for the variable, just as in `lookup-variable-value', and change the
+;;  corresponding value when we find it.
+
+     (define (set-variable-value! var val env)
+       (define (env-loop env)
+         (define (scan vars vals)
+           (cond ((null? vars)
+                  (env-loop (enclosing-environment env)))
+                 ((eq? var (car vars))
+                  (set-car! vals val))
+                 (else (scan (cdr vars) (cdr vals)))))
+         (if (eq? env the-empty-environment)
+             (error "Unbound variable -- SET!" var)
+             (let ((frame (first-frame env)))
+               (scan (frame-variables frame)
+                     (frame-values frame)))))
+       (env-loop env))
+
+;;  To define a variable, we search the first frame for a binding for
+;;  the variable, and change the binding if it exists (just as in
+;;  `set-variable-value!').  If no such binding exists, we adjoin one to
+;;  the first frame.
+
+     (define (define-variable! var val env)
+       (let ((frame (first-frame env)))
+         (define (scan vars vals)
+           (cond ((null? vars)
+                  (add-binding-to-frame! var val frame))
+                 ((eq? var (car vars))
+                  (set-car! vals val))
+                 (else (scan (cdr vars) (cdr vals)))))
+         (scan (frame-variables frame)
+               (frame-values frame))))
+
+;;===============================================
+;; RUNNING THE EVALUATOR
+;;===============================================
+
+;;  It does not matter how we represent the primitive procedure objects,
+;;  so long as `wombat-apply' can identify and wombat-apply them by using the procedures
+;;  `primitive-procedure?' and `wombat-apply-primitive-procedure'.  We have chosen
+;;  to represent a primitive procedure as a list beginning with the symbol
+;;  `primitive' and containing a procedure in the underlying Lisp that
+;;  implements that primitive.
+
+     (define (primitive-procedure? proc)
+       (tagged-list? proc 'primitive))
+
+     (define (primitive-implementation proc) (cadr proc))
+
+;;  `Setup-environment' will get the primitive names and implementation
+;;  procedures from a list:(1)
+
+     (define primitive-procedures
+       (list (list 'car car)
+             (list 'cdr cdr)
+             (list 'cons cons)
+             (list 'null? null?)
+             (list '+ +)
+             (list '- -)
+             (list '* *)
+             (list '/ /)
+             (list 'modulo modulo)
+             (list 'exp exp)
+             (list 'not wombat-not)
+             ))
+
+     (define (primitive-procedure-names)
+       (map car
+            primitive-procedures))
+
+     (define (primitive-procedure-objects)
+       (map (lambda (proc) (list 'primitive (cadr proc)))
+            primitive-procedures))
+
+;;  To wombat-apply a primitive procedure, we simply wombat-apply the implementation
+;;  procedure to the arguments, using the underlying Lisp system:(2)
+
+     (define (wombat-apply-primitive-procedure proc args)
+       (wombat-apply-in-underlying-scheme
+        (primitive-implementation proc) args))
+
+;;  There must be a binding for each primitive procedure name, so that
+;;  when `eval' evaluates the operator of an application of a primitive, it
+;;  will find an object to pass to `wombat-apply'.  We thus set up a global
+;;  environment that associates unique objects with the names of the
+;;  primitive procedures that can appear in the expressions we will be
+;;  evaluating.  The global environment also includes bindings for the
+;;  symbols `true' and `false', so that they can be used as variables in
+;;  expressions to be evaluated.
+
+     (define (setup-environment)
+       (let ((initial-env
+              (extend-environment (primitive-procedure-names)
+                                  (primitive-procedure-objects)
+                                  the-empty-environment)))
+         (define-variable! 'true true initial-env)
+         (define-variable! 'false false initial-env)
+         initial-env))
+
+     (define the-global-environment (setup-environment)) 
+
+;;  For convenience in running the metacircular evaluator, we provide a "driver
+;;  loop" that models the read-eval-print loop of the underlying Lisp
+;;  system.  It prints a "prompt", reads an input expression, evaluates
+;;  this expression in the global environment, and prints the result.  We
+;;  precede each printed result by an "output prompt" so as to distinguish
+;;  the value of the expression from other output that may be printed.(3)
+
+     (define input-prompt ";;; M-Eval input :>") 
+     (define output-prompt ";;; M-Eval value :3")
+
+     (define (driver-loop)
+       (prompt-for-input input-prompt)
+       (let ((input (read)))
+         (let ((output (eval input the-global-environment)))
+           (announce-output output-prompt)
+           (user-print output)))
+       (driver-loop))
+
+     (define (prompt-for-input string)
+       (newline) (newline) (display string) (newline))
+
+     (define (announce-output string)
+       (newline) (display string) (newline))
+
+;;  We use a special printing procedure, `user-print', to avoid printing
+;;  the environment part of a compound procedure, which may be a very long
+;;  list (or may even contain cycles).
+
+     (define (user-print object)
+       (if (compound-procedure? object)
+           (display (list 'compound-procedure
+                          (procedure-parameters object)
+                          (procedure-body object)
+                          '<procedure-env>))
+           (display object)))
+
