@@ -19,6 +19,7 @@
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
+        ((switch? exp) (eval (switch->cond exp) env)) 
         ((let? exp) (eval (let->lambda exp) env))
         ((and? exp) (eval-and exp env))
         ((or? exp) (eval-or exp env))
@@ -328,13 +329,65 @@
 (define (let-clause-var clause) (car clause))
 (define (let-clause-exp clause) (cadr clause))
 
-(let-vars (let-clauses test-let)) 
-(let-exprs (let-clauses test-let)) 
-
 (define (let->lambda expr)
   (let ((clauses (let-clauses expr)))
     (cons (make-lambda (let-vars clauses) (let-body expr))
           (let-exprs clauses)))) 
+
+
+;; custom! (exercise 4.10?)
+;; switch statement has the following behavior:
+;;
+;; (switch <tag-expr>
+;;    ((<name1> <value1>)
+;;     (<name2> <value2>)
+;;     (else <value3>)))
+;;
+;; If the result of evaluating tag-expr matches one
+;; of the listed <name> values, return the specified
+;; value, evaluated. Otherwise, if an else statement
+;; is specified, return the value associated with the
+;; else- if not, return '().
+
+;; (define (make-animal species name) (cons species name))
+;; (define dog (make-animal 'dog 'steve))
+;; (define cat (make-animal 'cat 'sally))
+;; (define fish (make-animal 'fish 'mortimer))
+;; (switch 'dog (('dog 1) ('cat 2) (else 3)))
+;;    
+
+(define (switch? p) (tagged-list? p 'switch))
+(define (switch-tag-name exp) (cadr exp)) 
+(define (switch-clauses exp) (caddr exp)) 
+(define (switch-predicate clause) (car clause))
+(define (switch-value clause) (cdr clause))
+(define (switch-else-clause? clause)
+  (eq? (switch-predicate clause) 'else))
+
+;; I implement it as a derived expression:
+;; a switch statement can be transformed into a
+;; cond statement of the following form, assuming
+;; the presence of a built-in eq? operator:
+;;
+
+(define (make-cond clauses)
+  (cons 'cond clauses))
+(define (make-cond-clause pred val)
+  (cons pred val))
+
+(define (switch->cond expr)
+  (define (switch-clauses->cond-clauses tag clauses)
+    (define (switch-clause->cond-clause tag clause)
+      (if (switch-else-clause? clause)
+          (make-cond-clause 'else (switch-value clause))
+        (make-cond-clause (list 'eq? tag (switch-predicate clause))
+                          (switch-value clause))))
+    (if (null? clauses) '()
+      (cons (switch-clause->cond-clause tag (car clauses))
+            (switch-clauses->cond-clauses tag (cdr clauses))))) 
+  (let ((tag-name (switch-tag-name expr))
+        (clauses (switch-clauses expr)))
+    (make-cond (switch-clauses->cond-clauses tag-name clauses))))
 
 ;; TO DO:
 
@@ -347,7 +400,6 @@
 ;;   of the language to be evaluated.  To illustrate this, design and
 ;;   implement a new syntax for Scheme by modifying the procedures in
 ;;   this section, without changing `eval' or `wombat-apply'.
-
 
 ;;===============================================
 ;; EVALUATOR DATA STRUCTURES
@@ -506,6 +558,8 @@
              (list 'modulo modulo)
              (list 'exp exp)
              (list 'not wombat-not)
+             (list 'eq? eq?)
+             (list '= =)
              ))
 
      (define (primitive-procedure-names)
