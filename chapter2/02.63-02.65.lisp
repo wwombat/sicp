@@ -40,6 +40,22 @@
  ;;       procedures produce for the trees in *Note Figure 2-16::?
 
 
+;; It would appear they do...! They both produce what
+;; is known in the business as an 'in-order' depth-first traversal.
+;; The first achieves this by printing, recursively,
+;; all the values of the current tree's left subtree,
+;; then that tree's value, followed by its right subtree.
+
+;; The next one is a little trickier! But I understand it as
+;; repeatedly 'packing' the tree to the right.
+;; The base case is when the 'left tree' (tree) is empty:
+;; then, the 'right tree' (result-list) is returned.
+;; The recursive calls create smaller subproblems by removing
+;; the current tree's value at each step and cons'ing it with
+;; everything to its right (the inner recursive call).
+;; The outer recursive process repeats this, but one tree to
+;; the left.
+
 
  ;;  *Figure 2.16:* Various binary trees that represent the set
  ;;  {1,3,5,7,9,11}.
@@ -52,6 +68,14 @@
  ;;                          \
  ;;                          11
 
+
+(define tree-1 '(7 (3 (1 () ()) (5 () ())) (9 () (11 () ())))) 
+(define tree-2 '(3 (1 () ()) (7 (5 () ()) (9 () (11 () ()))))) 
+(tree->list-1 tree-1) 
+(tree->list-2 tree-1) 
+
+(tree->list-1 tree-2) 
+(tree->list-2 tree-2) 
 
 
  ;;    b. Do the two procedures have the same order of growth in the
@@ -86,7 +110,6 @@
                   (remaining-elts (cdr right-result)))
               (cons (make-tree this-entry left-tree right-tree)
                     remaining-elts))))))))
-
  ;;    a. Write a short paragraph explaining as clearly as you can how
  ;;       `partial-tree' works.  Draw the tree produced by `list->tree'
  ;;       for the list `(1 3 5 7 9 11)'.
