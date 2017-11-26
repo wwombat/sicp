@@ -82,6 +82,27 @@
  ;;       number of steps required to convert a balanced tree with n
  ;;       elements to a list?  If not, which one grows more slowly?
 
+;; If we examine the procedures, it becomes apparent that they
+;; both take a time to execute proportional to the overall size of
+;; the tree: both recurse to the 'left' and the 'right', combining
+;; the results of said recursions with 'append' and 'cons' respectively.
+;; -> O(N) number of 'steps'
+;; The difference in *cost* then comes down to the difference in cost
+;; between these two operations! cons is constant time, leaving us
+;; with a finally time complexity of O(N).
+;; 'append', on the other hand, takes time proportional to the length
+;; of its first list argument...! Now, the question is how many times
+;; do we 'append' in a given run of the algorithm, and at what cost?
+;; Since we are appending 'left' halves to 'right' halves, we append
+;; as many times as there are 'forks' in the tree.
+;; In the worst case, this is N times (the classic devolved 'linked
+;; list' tree), leaving us with an O(N^2) runtime!
+;; However, this question asks for an analysis of a balanced tree,
+;; which is a different proposition all together!
+;; At each 'level' of a balanced tree, the collected calls to append have
+;; a cost of O(N) (since we must be appending all elements in the tree
+;; somewhere!). Then, since the tree is balanced, there are log(n) layers,
+;; giving us a cost of O(NlogN)
 
  ;;  *Exercise 2.64:* The following procedure `list->tree' converts an
  ;;  ordered list to a balanced binary tree.  The helper procedure
