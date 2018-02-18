@@ -117,8 +117,16 @@
   (car (partial-tree elements (length elements))))
 
 (define (partial-tree elts n)
+  ;; If we've gone n steps, return a pair that is an
+  ;; empty tree and the remaining elements.
   (if (= n 0)
-      (cons '() elts)
+      (cons '() elts) ;; RETURN!
+
+    ;; Else...
+    ;; we take the list and split it into three parts:
+    ;; the left half (left-result of size left-size),
+    ;; the right half (right-result of size right-size),
+    ;; and the center, 'this-entry'.
     (let ((left-size (quotient (- n 1) 2)))
       (let ((left-result (partial-tree elts left-size)))
         (let ((left-tree (car left-result))
@@ -129,11 +137,13 @@
                                             right-size)))
             (let ((right-tree (car right-result))
                   (remaining-elts (cdr right-result)))
-              (cons (make-tree this-entry left-tree right-tree)
+              (cons (make-tree this-entry left-tree right-tree) ;; RETURN!
                     remaining-elts))))))))
  ;;    a. Write a short paragraph explaining as clearly as you can how
  ;;       `partial-tree' works.  Draw the tree produced by `list->tree'
  ;;       for the list `(1 3 5 7 9 11)'.
+
+;; 
 
  ;;    b. What is the order of growth in the number of steps required by
  ;;       `list->tree' to convert a list of n elements?

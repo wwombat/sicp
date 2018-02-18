@@ -21,6 +21,7 @@
         ((cond? exp) (eval (cond->if exp) env))
         ((switch? exp) (eval (switch->cond exp) env)) 
         ((let? exp) (eval (let->lambda exp) env))
+        ((let*? exp) (eval (let*->nested-lets exp) env))
         ((and? exp) (eval-and exp env))
         ((or? exp) (eval-or exp env))
         ((application? exp)
@@ -334,6 +335,92 @@
     (cons (make-lambda (let-vars clauses) (let-body expr))
           (let-exprs clauses)))) 
 
+;;   *Exercise 4.7:* `Let*' is similar to `let', except that the
+;;   bindings of the `let' variables are performed sequentially from
+;;   left to right, and each binding is made in an environment in which
+;;   all of the preceding bindings are visible.  For example
+
+;;        (let* ((x 3)
+;;               (y (+ x 2))
+;;               (z (+ x y 5)))
+;;          (* x z))
+
+;;   returns 39.  Explain how a `let*' expression can be rewritten as a
+;;   set of nested `let' expressions, and write a procedure
+;;   `let*->nested-lets' that performs this transformation.  If we have
+;;   already implemented `let' (*Note Exercise 4-6::) and we want to
+;;   extend the evaluator to handle `let*', is it sufficient to add a
+;;   clause to `eval' whose action is
+
+;;        (eval (let*->nested-lets exp) env)
+
+;;   or must we explicitly expand `let*' in terms of non-derived
+;;   expressions?
+
+;; Given that <VAR_n> and <EXP_n> expressions are evaluated before
+;; the let <BODY> expressions (this in turn guaranteed by the order
+;; in which the expressions evaluated in a lambda function must
+;; be available) and that the names <VAR_n> are visible within <BODY>,
+;; expanding the let* expression into nest lets allows us to get
+;; the sequencing and visibility properties we desire.
+
+;; (let* ((<VAR_1>, <EXP_1>)
+;;        (<VAR_2>, <EXP_2>)
+;;        (<VAR_3>, <EXP_3>))
+;;   (<BODY>))
+
+;; is equivalent to
+
+;; (let ((<VAR_1>, <EXP_1>))
+;;    (let ((<VAR_2>, <EXP_2>))
+;;       (let ((<VAR_3>, <EXP_3>))
+;;          (<BODY>))))
+
+(define (let*? p) (tagged-list? p 'let*))
+
+(define (let*-clauses expr) (cadr expr))
+(define (let*-body expr) (caddr expr))
+
+(define (make-let clauses body)
+  (list 'let clauses body)) 
+
+(define (let*->nested-lets expr)
+  (define (nester-helper clauses body)
+    (if (null? clauses) body
+      (make-let (list (car clauses)) (nester-helper (cdr clauses) body))))
+  (let ((clauses (let*-clauses expr))
+        (body (let*-body expr)))
+    (nester-helper clauses body)))
+
+(let*->nested-lets '(let* ((x 3) (y (+ x 2))) (* x y))) 
+
+;; Also, as demonstrated above, it's perfectly sufficient to simply
+;; add `let*->nested-lets' to `eval', and let eval apply `let->lambda'
+;; repeatedly! Whether this is the most effecient way to do this
+;; is something I would have to think a little more about...
+
+;;   *Exercise 4.8:* "Named `let'" is a variant of `let' that has the
+;;   form
+
+;;        (let <VAR> <BINDINGS> <BODY>)
+
+;;   The <BINDINGS> and <BODY> are just as in ordinary `let', except
+;;   that <VAR> is bound within <BODY> to a procedure whose body is
+;;   <BODY> and whose parameters are the variables in the <BINDINGS>.
+;;   Thus, one can repeatedly execute the <BODY> by invoking the
+;;   procedure named <VAR>.  For example, the iterative Fibonacci
+;;   procedure (section *Note 1-2-2::) can be rewritten using named
+;;   `let' as follows:
+
+;;        (define (fib n)
+;;          (let fib-iter ((a 1)
+;;                         (b 0)
+;;                         (count n))
+;;            (if (= count 0)
+;;                b
+;;                (fib-iter (+ a b) a (- count 1)))))
+
+;; TODO
 
 ;; custom! (exercise 4.10?)
 ;; switch statement has the following behavior:
@@ -368,7 +455,6 @@
 ;; a switch statement can be transformed into a
 ;; cond statement of the following form, assuming
 ;; the presence of a built-in eq? operator:
-;;
 
 (define (make-cond clauses)
   (cons 'cond clauses))
@@ -389,9 +475,11 @@
         (clauses (switch-clauses expr)))
     (make-cond (switch-clauses->cond-clauses tag-name clauses))))
 
+
 ;; TO DO:
 
-;;   *Exercise 4.8:* `Let*'
+
+
 ;;   *Exercise 4.8:* "Named `let'"
 ;;   *Exercise 4.9:* Many languages support a variety of iteration
 ;;   constructs, such as `do', `for', `while', and `until'. 
